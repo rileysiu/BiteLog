@@ -68,7 +68,11 @@ function close() {
           <template v-if="f.unitGrams"> · 1 份 {{ f.unitGrams }} 克</template>
         </div>
       </div>
-      <button class="add-btn" :aria-label="'加入 ' + f.name">
+      <button
+        class="add-btn"
+        :aria-label="'加入 ' + f.name"
+        @click="router.push({ name: 'food', params: { id: f.id }, query: { meal } })"
+      >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
       </button>
     </div>
