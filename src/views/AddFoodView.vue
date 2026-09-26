@@ -5,12 +5,14 @@ import { useFoodsStore } from '../stores/foods'
 import { MEALS, suggestMeal, mealName } from '../utils/meal'
 import { useDiaryStore } from '../stores/diary'
 import { useMealsStore } from '../stores/meals'
+import { useCustomFoodsStore } from '../stores/customFoods'
 
 const route = useRoute()
 const router = useRouter()
 const foods = useFoodsStore()
 const diary = useDiaryStore()
 const savedMeals = useMealsStore()
+const custom = useCustomFoodsStore()
 
 const mealKcal = (m) => Math.round(m.items.reduce((s, i) => s + (i.kcal || 0), 0))
 
@@ -27,7 +29,7 @@ const autoPicked = !route.query.meal
 const meal = ref(route.query.meal || suggestMeal(now))
 const query = ref('')
 
-const results = computed(() => foods.search(query.value))
+const results = computed(() => [...custom.search(query.value), ...foods.search(query.value)].slice(0, 50))
 
 onMounted(() => foods.load())
 
@@ -80,16 +82,30 @@ function close() {
           </button>
         </div>
       </template>
+      <h2 class="section-title">我的食品</h2>
+      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="new-btn">＋ 新增自訂食品</RouterLink>
+      <div v-for="f in custom.list" :key="f.id" class="item">
+        <RouterLink :to="{ name: 'editCustomFood', params: { id: f.id } }" class="item-info link">
+          <div class="item-name">{{ f.name }}</div>
+          <div class="item-meta">{{ f.brand ? f.brand + ' · ' : '' }}每份 {{ f.unitGrams }} {{ f.baseLabel }} · {{ Math.round(f.raw.per === 'serving' ? f.raw.values.kcal : (f.raw.values.kcal * f.unitGrams) / 100) }} 卡</div>
+        </RouterLink>
+        <button class="add-btn" :aria-label="'加入 ' + f.name" @click="router.push({ name: 'food', params: { id: f.id }, query: { meal } })">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      </div>
       <p class="empty">輸入食品名稱開始搜尋，例如：吐司、雞蛋、白飯</p>
     </template>
-    <p v-else-if="results.length === 0" class="empty">找不到「{{ query }}」，之後可以新增自訂食品</p>
+    <template v-else-if="results.length === 0">
+      <p class="empty">找不到「{{ query }}」</p>
+      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="new-btn">＋ 新增自訂食品</RouterLink>
+    </template>
 
     <div v-for="f in results" :key="f.id" class="item">
       <div class="item-info">
-        <div class="item-name">{{ f.name }}</div>
+        <div class="item-name"><span v-if="f.source === 'custom'" class="mine">我的食品</span>{{ f.name }}</div>
         <div v-if="f.alias" class="item-alias">俗名：{{ f.alias }}</div>
         <div class="item-meta">
-          <span class="portion">每 100 克</span> · {{ Math.round(f.n.kcal ?? 0) }} 卡
+          <span class="portion">每 100 {{ f.baseLabel || '克' }}</span> · {{ Math.round(f.n.kcal ?? 0) }} 卡
           <template v-if="f.unitGrams"> · 1 份 {{ f.unitGrams }} 克</template>
         </div>
       </div>
@@ -126,4 +142,6 @@ function close() {
 .add-btn { width: 44px; height: 44px; border: 0; border-radius: 22px; background: var(--soft); color: var(--text-accent); padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .section-title { font-size: 14px; font-weight: 900; margin: 4px 4px 0; }
 .link { text-decoration: none; color: inherit; }
-</style> 
+.new-btn { height: 48px; border: 1.5px dashed #9AA2B3; border-radius: 24px; color: var(--text-accent); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.mine { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--soft); color: var(--text-accent); margin-right: 6px; }
+</style>

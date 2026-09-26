@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFoodsStore } from '../stores/foods'
+import { useCustomFoodsStore } from '../stores/customFoods'
 import { useDiaryStore } from '../stores/diary'
 import { useAuthStore } from '../stores/auth'
 import { MEALS, suggestMeal, mealName } from '../utils/meal'
@@ -9,16 +10,23 @@ import { MEALS, suggestMeal, mealName } from '../utils/meal'
 const route = useRoute()
 const router = useRouter()
 const foods = useFoodsStore()
+const custom = useCustomFoodsStore()
 const diary = useDiaryStore()
 const auth = useAuthStore()
 
 onMounted(() => foods.load())
 
-// 判斷現在是「加入」還是「編輯」
 const isEdit = computed(() => route.name === 'editEntry')
 const entry = computed(() => (isEdit.value ? diary.entries.find((e) => e.id === route.params.id) : null))
 const foodId = computed(() => (isEdit.value ? entry.value?.foodId : route.params.id))
-const food = computed(() => (foodId.value ? foods.getById(foodId.value) : null))
+// 先找食藥署資料庫，找不到再找自訂食品
+const food = computed(() => {
+  const id = foodId.value
+  if (!id) return null
+  return foods.getById(id) ?? custom.getById(id) ?? null
+})
+const isCustom = computed(() => food.value?.source === 'custom')
+const baseLabel = computed(() => food.value?.baseLabel ?? '克')
 
 const now = new Date()
 const pad = (n) => String(n).padStart(2, '0')
@@ -27,10 +35,13 @@ const meal = ref(route.query.meal || suggestMeal(now))
 const date = ref(diary.selectedDate)
 const time = ref(`${pad(now.getHours())}:${pad(now.getMinutes())}`)
 
+// 單位清單：自訂食品有自己的單位；食藥署食品有「每單位重」的會多一個「份」
 const units = computed(() => {
-  const list = []
-  if (food.value?.unitGrams) list.push({ key: 'serving', label: '份', grams: food.value.unitGrams })
-  list.push({ key: 'gram', label: '克', grams: 1 })
+  const f = food.value
+  let list = []
+  if (f?.units) list = [...f.units]
+  else if (f?.unitGrams) list = [{ key: 'serving', label: '份', grams: f.unitGrams }]
+  list.push({ key: 'gram', label: baseLabel.value, grams: 1 })
   return list
 })
 
@@ -38,7 +49,6 @@ const unitKey = ref(null)
 const qty = ref('')
 const initialized = ref(false)
 
-// 資料都載入後，填入預設值（編輯模式就填入原本的記錄）
 watch(
   [food, entry],
   ([f, e]) => {
@@ -48,19 +58,18 @@ watch(
       meal.value = e.meal
       date.value = e.date
       time.value = e.time
-      if (e.unit === 'serving' && f.unitGrams) {
-        unitKey.value = 'serving'
-        qty.value = String(e.qty ?? Math.round((e.grams / f.unitGrams) * 10) / 10)
+      const u = units.value.find((x) => x.key === e.unit)
+      if (u && u.key !== 'gram') {
+        unitKey.value = u.key
+        qty.value = String(e.qty ?? Math.round((e.grams / u.grams) * 10) / 10)
       } else {
         unitKey.value = 'gram'
         qty.value = String(e.grams ?? 100)
       }
-    } else if (f.unitGrams) {
-      unitKey.value = 'serving'
-      qty.value = '1'
     } else {
-      unitKey.value = 'gram'
-      qty.value = '100'
+      const first = units.value[0]
+      unitKey.value = first.key
+      qty.value = first.key === 'gram' ? '100' : '1'
     }
     initialized.value = true
   },
@@ -75,6 +84,10 @@ function pickUnit(u) {
   const g = grams.value
   qty.value = u.key === 'gram' ? String(Math.round(g) || 100) : String(Math.round((g / u.grams) * 10) / 10 || 1)
   unitKey.value = u.key
+}
+
+function unitButtonLabel(u) {
+  return u.key === 'gram' ? u.label : `${u.label}（${u.grams} ${baseLabel.value}）`
 }
 
 const scaled = computed(() => {
@@ -94,9 +107,11 @@ const otherNutrients = computed(() =>
 )
 
 const r1 = (v) => Math.round(v * 10) / 10
-const portionText = computed(() =>
-  unit.value?.key === 'gram' ? `${qty.value} 克` : `${qty.value} ${unit.value?.label}（${Math.round(grams.value)} 克）`
-)
+const portionText = computed(() => {
+  const u = unit.value
+  if (!u) return ''
+  return u.key === 'gram' ? `${qty.value} ${baseLabel.value}` : `${qty.value} ${u.label}（${Math.round(grams.value)} ${baseLabel.value}）`
+})
 const canSave = computed(() => auth.isLoggedIn && grams.value > 0 && date.value && time.value)
 
 function buildEntry() {
@@ -108,7 +123,7 @@ function buildEntry() {
     name: food.value.name,
     portion: portionText.value,
     foodId: food.value.id,
-    source: 'tfnd',
+    source: food.value.source ?? 'tfnd',
     unit: unitKey.value,
     qty: parseFloat(qty.value) || 0,
     grams: r1(grams.value),
@@ -134,7 +149,6 @@ function save() {
   }
 }
 
-// 刪除：第一次按顯示確認，第二次按才真的刪除
 const confirmDelete = ref(false)
 function onDelete() {
   if (!confirmDelete.value) {
@@ -163,10 +177,10 @@ const saveLabel = computed(() => {
   <p v-if="isEdit && !entry && diary.status !== 'ready'" class="empty">載入中…</p>
   <p v-else-if="isEdit && !entry" class="empty">找不到這筆記錄，可能已經被刪除了。</p>
 
-  <template v-else-if="isEdit && entry && !entry.foodId">
+  <template v-else-if="isEdit && entry && !food && (foods.status === 'loaded' && custom.status === 'ready')">
     <div class="head">
       <h2 class="food-name">{{ entry.name }}</h2>
-      <p class="food-desc">這筆記錄沒有連結到食品資料庫，只能刪除。</p>
+      <p class="food-desc">這筆記錄的食品已經不存在（可能是刪除了自訂食品），只能刪除這筆記錄。</p>
     </div>
     <div class="bottom">
       <button class="delete-btn full" @click="onDelete">{{ confirmDelete ? '確定刪除？' : '刪除記錄' }}</button>
@@ -178,7 +192,7 @@ const saveLabel = computed(() => {
 
   <template v-else>
     <div class="head">
-      <span class="badge">食藥署資料庫</span>
+      <span class="badge" :class="{ custom: isCustom }">{{ isCustom ? '我的食品' : '食藥署資料庫' }}</span>
       <h2 class="food-name">{{ food.name }}</h2>
       <p class="food-desc">{{ food.desc }}</p>
     </div>
@@ -188,7 +202,7 @@ const saveLabel = computed(() => {
       <div class="qty-row">
         <input id="qty" v-model="qty" type="number" inputmode="decimal" class="num qty-input" />
         <span class="unit-name">{{ unit?.label }}</span>
-        <span class="grams">＝ {{ r1(grams) }} 克</span>
+        <span class="grams">＝ {{ r1(grams) }} {{ baseLabel }}</span>
       </div>
       <div class="pills">
         <button
@@ -198,7 +212,7 @@ const saveLabel = computed(() => {
           :aria-pressed="u.key === unitKey"
           @click="pickUnit(u)"
         >
-          {{ u.key === 'gram' ? '克' : `份（${u.grams} 克）` }}
+          {{ unitButtonLabel(u) }}
         </button>
       </div>
 
@@ -246,9 +260,10 @@ const saveLabel = computed(() => {
           <span class="num">{{ n.value === undefined ? '—' : `${r1(n.value)} ${n.unit}` }}</span>
         </div>
       </div>
+      <RouterLink v-if="isCustom" :to="{ name: 'editCustomFood', params: { id: food.id } }" class="edit-link">修改這個自訂食品</RouterLink>
     </section>
 
-    <div class="bottom" :class="{ two: isEdit }">
+    <div class="bottom">
       <button v-if="isEdit" class="delete-btn" @click="onDelete">{{ confirmDelete ? '確定刪除？' : '刪除' }}</button>
       <button class="add-btn" :disabled="!canSave" @click="save">{{ saveLabel }}</button>
     </div>
@@ -263,6 +278,7 @@ const saveLabel = computed(() => {
 .empty { font-size: 14px; color: var(--muted); }
 .head { padding: 0 6px 12px; }
 .badge { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; background: #DDF2EF; color: #1C625B; }
+.badge.custom { background: var(--soft); color: var(--text-accent); }
 .food-name { font-size: 24px; font-weight: 900; margin: 8px 0 4px; }
 .food-desc { font-size: 12px; color: var(--muted); margin: 0; }
 .card { background: #FFFFFF; border-radius: 24px; padding: 18px 22px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -288,6 +304,7 @@ const saveLabel = computed(() => {
 .more-btn { height: 44px; border: 0; border-radius: 22px; background: var(--bg); color: var(--ink); font-size: 14px; font-weight: 700; }
 .all-row { display: flex; justify-content: space-between; min-height: 40px; align-items: center; border-top: 1px solid var(--line); font-size: 14px; }
 .all-row .num { font-weight: 800; }
+.edit-link { align-self: center; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 700; color: var(--text-accent); text-decoration: none; }
 .bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(480px, 100%); padding: 16px 20px 28px; background: var(--bg); display: flex; gap: 10px; }
 .add-btn { flex: 1; height: 56px; border: 0; border-radius: 28px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 900; }
 .add-btn:disabled { background: #C9CEDA; color: var(--muted); }
