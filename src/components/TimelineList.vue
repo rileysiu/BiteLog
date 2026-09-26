@@ -28,9 +28,10 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
 <template>
   <section class="card">
     <div v-if="rows.length === 0" class="empty">這一天還沒有記錄</div>
-    <div
+    <RouterLink
       v-for="(row, i) in rows"
       :key="row.id"
+      :to="{ name: 'editEntry', params: { id: row.id } }"
       class="row"
       :class="{ divider: row.showTime && i > 0 }"
     >
@@ -44,14 +45,14 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
         <div class="macro">{{ macroLine(row) }}</div>
       </div>
       <div class="num kcal">{{ row.kcal }}</div>
-    </div>
+    </RouterLink>
   </section>
 </template>
 
 <style scoped>
 .card { background: #FFFFFF; border-radius: 24px; padding: 6px 0; }
 .empty { padding: 20px 22px; font-size: 14px; color: var(--muted); }
-.row { display: flex; gap: 12px; padding: 12px 20px; align-items: flex-start; }
+.row { display: flex; gap: 12px; padding: 12px 20px; align-items: flex-start; text-decoration: none; color: inherit; }
 .divider { border-top: 1px solid var(--line); }
 .time { width: 46px; flex-shrink: 0; font-size: 15px; font-weight: 800; }
 .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { collection, doc, onSnapshot, addDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuthStore } from './auth'
 import { todayKey } from '../utils/date'
@@ -82,10 +82,28 @@ export const useDiaryStore = defineStore('diary', () => {
     })
   }
 
+    function updateEntry(id, data) {
+    if (!auth.user) return
+    saveError.value = ''
+    updateDoc(doc(db, 'users', auth.user.uid, 'entries', id), { ...data, updatedAt: serverTimestamp() }).catch((err) => {
+      console.error(err)
+      saveError.value = '修改失敗，請檢查網路後再試一次'
+    })
+  }
+
+  function deleteEntry(id) {
+    if (!auth.user) return
+    saveError.value = ''
+    deleteDoc(doc(db, 'users', auth.user.uid, 'entries', id)).catch((err) => {
+      console.error(err)
+      saveError.value = '刪除失敗，請檢查網路後再試一次'
+    })
+  }
+
   async function saveGoals(data) {
     if (!auth.user) throw new Error('尚未登入')
     await setDoc(doc(db, 'users', auth.user.uid, 'settings', 'goals'), data, { merge: true })
   }
 
-  return { goalSettings, goals, entries, selectedDate, status, saveError, loggedDates, addEntry, saveGoals }
+  return { goalSettings, goals, entries, selectedDate, status, saveError, loggedDates, addEntry, updateEntry, deleteEntry, saveGoals }
 })

@@ -3,8 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFoodsStore } from '../stores/foods'
 import { useDiaryStore } from '../stores/diary'
-import { MEALS, suggestMeal, mealName } from '../utils/meal'
 import { useAuthStore } from '../stores/auth'
+import { MEALS, suggestMeal, mealName } from '../utils/meal'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,7 +14,11 @@ const auth = useAuthStore()
 
 onMounted(() => foods.load())
 
-const food = computed(() => foods.getById(route.params.id))
+// 判斷現在是「加入」還是「編輯」
+const isEdit = computed(() => route.name === 'editEntry')
+const entry = computed(() => (isEdit.value ? diary.entries.find((e) => e.id === route.params.id) : null))
+const foodId = computed(() => (isEdit.value ? entry.value?.foodId : route.params.id))
+const food = computed(() => (foodId.value ? foods.getById(foodId.value) : null))
 
 const now = new Date()
 const pad = (n) => String(n).padStart(2, '0')
@@ -23,7 +27,6 @@ const meal = ref(route.query.meal || suggestMeal(now))
 const date = ref(diary.selectedDate)
 const time = ref(`${pad(now.getHours())}:${pad(now.getMinutes())}`)
 
-// 單位：有「每單位重」的食品多一個「份」
 const units = computed(() => {
   const list = []
   if (food.value?.unitGrams) list.push({ key: 'serving', label: '份', grams: food.value.unitGrams })
@@ -33,19 +36,33 @@ const units = computed(() => {
 
 const unitKey = ref(null)
 const qty = ref('')
+const initialized = ref(false)
 
-// 食品資料載入後，決定預設單位
+// 資料都載入後，填入預設值（編輯模式就填入原本的記錄）
 watch(
-  food,
-  (f) => {
-    if (!f || unitKey.value) return
-    if (f.unitGrams) {
+  [food, entry],
+  ([f, e]) => {
+    if (initialized.value || !f) return
+    if (isEdit.value) {
+      if (!e) return
+      meal.value = e.meal
+      date.value = e.date
+      time.value = e.time
+      if (e.unit === 'serving' && f.unitGrams) {
+        unitKey.value = 'serving'
+        qty.value = String(e.qty ?? Math.round((e.grams / f.unitGrams) * 10) / 10)
+      } else {
+        unitKey.value = 'gram'
+        qty.value = String(e.grams ?? 100)
+      }
+    } else if (f.unitGrams) {
       unitKey.value = 'serving'
       qty.value = '1'
     } else {
       unitKey.value = 'gram'
       qty.value = '100'
     }
+    initialized.value = true
   },
   { immediate: true }
 )
@@ -53,7 +70,6 @@ watch(
 const unit = computed(() => units.value.find((u) => u.key === unitKey.value) ?? units.value[0])
 const grams = computed(() => (parseFloat(qty.value) || 0) * (unit.value?.grams ?? 0))
 
-// 換單位時，把數量換算成新單位，總重量不變
 function pickUnit(u) {
   if (u.key === unitKey.value) return
   const g = grams.value
@@ -61,7 +77,6 @@ function pickUnit(u) {
   unitKey.value = u.key
 }
 
-// 依照份量換算所有營養素（資料庫是每 100 克）
 const scaled = computed(() => {
   const out = {}
   if (!food.value) return out
@@ -82,12 +97,11 @@ const r1 = (v) => Math.round(v * 10) / 10
 const portionText = computed(() =>
   unit.value?.key === 'gram' ? `${qty.value} 克` : `${qty.value} ${unit.value?.label}（${Math.round(grams.value)} 克）`
 )
-const canAdd = computed(() => auth.isLoggedIn && grams.value > 0 && date.value && time.value)
+const canSave = computed(() => auth.isLoggedIn && grams.value > 0 && date.value && time.value)
 
-function add() {
-  if (!canAdd.value) return
+function buildEntry() {
   const s = scaled.value
-  diary.addEntry({
+  return {
     date: date.value,
     meal: meal.value,
     time: time.value,
@@ -95,16 +109,46 @@ function add() {
     portion: portionText.value,
     foodId: food.value.id,
     source: 'tfnd',
+    unit: unitKey.value,
+    qty: parseFloat(qty.value) || 0,
     grams: r1(grams.value),
     kcal: Math.round(s.kcal ?? 0),
     carb: s.carb ?? 0,
     fat: s.fat ?? 0,
     protein: s.protein ?? 0,
     nutrients: s,
-  })
-  diary.selectedDate = date.value
-  router.push('/')
+  }
 }
+
+function save() {
+  if (!canSave.value) return
+  const data = buildEntry()
+  if (isEdit.value) {
+    diary.updateEntry(entry.value.id, data)
+    diary.selectedDate = data.date
+    router.back()
+  } else {
+    diary.addEntry(data)
+    diary.selectedDate = data.date
+    router.push('/')
+  }
+}
+
+// 刪除：第一次按顯示確認，第二次按才真的刪除
+const confirmDelete = ref(false)
+function onDelete() {
+  if (!confirmDelete.value) {
+    confirmDelete.value = true
+    return
+  }
+  diary.deleteEntry(entry.value.id)
+  router.back()
+}
+
+const saveLabel = computed(() => {
+  if (!auth.isLoggedIn) return '請先登入才能記錄'
+  return isEdit.value ? '儲存修改' : `加入${mealName(meal.value)}`
+})
 </script>
 
 <template>
@@ -112,11 +156,24 @@ function add() {
     <button class="icon-btn" @click="router.back()" aria-label="返回">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
     </button>
-    <h1 class="page-title">加入食品</h1>
+    <h1 class="page-title">{{ isEdit ? '編輯記錄' : '加入食品' }}</h1>
     <div class="spacer"></div>
   </div>
 
-  <p v-if="!food && foods.status !== 'error'" class="empty">載入中…</p>
+  <p v-if="isEdit && !entry && diary.status !== 'ready'" class="empty">載入中…</p>
+  <p v-else-if="isEdit && !entry" class="empty">找不到這筆記錄，可能已經被刪除了。</p>
+
+  <template v-else-if="isEdit && entry && !entry.foodId">
+    <div class="head">
+      <h2 class="food-name">{{ entry.name }}</h2>
+      <p class="food-desc">這筆記錄沒有連結到食品資料庫，只能刪除。</p>
+    </div>
+    <div class="bottom">
+      <button class="delete-btn full" @click="onDelete">{{ confirmDelete ? '確定刪除？' : '刪除記錄' }}</button>
+    </div>
+  </template>
+
+  <p v-else-if="!food && foods.status !== 'error'" class="empty">載入中…</p>
   <p v-else-if="!food" class="empty">找不到這個食品</p>
 
   <template v-else>
@@ -191,10 +248,9 @@ function add() {
       </div>
     </section>
 
-    <div class="bottom">
-      <button class="add-btn" :disabled="!canAdd" @click="add">
-        {{ auth.isLoggedIn ? `加入${mealName(meal)}` : '請先登入才能記錄' }}
-      </button>
+    <div class="bottom" :class="{ two: isEdit }">
+      <button v-if="isEdit" class="delete-btn" @click="onDelete">{{ confirmDelete ? '確定刪除？' : '刪除' }}</button>
+      <button class="add-btn" :disabled="!canSave" @click="save">{{ saveLabel }}</button>
     </div>
   </template>
 </template>
@@ -232,7 +288,9 @@ function add() {
 .more-btn { height: 44px; border: 0; border-radius: 22px; background: var(--bg); color: var(--ink); font-size: 14px; font-weight: 700; }
 .all-row { display: flex; justify-content: space-between; min-height: 40px; align-items: center; border-top: 1px solid var(--line); font-size: 14px; }
 .all-row .num { font-weight: 800; }
-.bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(480px, 100%); padding: 16px 20px 28px; background: var(--bg); }
-.add-btn { width: 100%; height: 56px; border: 0; border-radius: 28px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 900; }
+.bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(480px, 100%); padding: 16px 20px 28px; background: var(--bg); display: flex; gap: 10px; }
+.add-btn { flex: 1; height: 56px; border: 0; border-radius: 28px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 900; }
 .add-btn:disabled { background: #C9CEDA; color: var(--muted); }
+.delete-btn { height: 56px; padding: 0 22px; border: 1.5px solid #F3B8AE; border-radius: 28px; background: #FFFFFF; color: #B42318; font-size: 15px; font-weight: 700; }
+.delete-btn.full { flex: 1; }
 </style>

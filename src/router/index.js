@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/add/:id', name: 'food', component: FoodEntryView, meta: { hideNav: true } },
     { path: '/goals', name: 'goals', component: GoalsView, meta: { hideNav: true } },
     { path: '/weight', name: 'weight', component: WeightLogView, meta: { hideNav: true } },
+    { path: '/entry/:id', name: 'editEntry', component: FoodEntryView, meta: { hideNav: true } },
 ],
 })
 

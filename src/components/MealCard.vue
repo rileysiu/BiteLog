@@ -54,14 +54,14 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
     </div>
 
     <div v-if="hasItems && open" class="body">
-      <div v-for="item in items" :key="item.id" class="item">
+      <RouterLink v-for="item in items" :key="item.id" :to="{ name: 'editEntry', params: { id: item.id } }" class="item">
         <div class="item-info">
           <div class="item-name">{{ item.name }}</div>
           <div class="item-portion">{{ item.portion }}</div>
           <div class="item-macro">{{ macroLine(item) }}</div>
         </div>
         <div class="num item-kcal">{{ item.kcal }}</div>
-      </div>
+      </RouterLink>
 
       <div class="foot">
         <div class="item-macro">{{ macroLine(sum) }}</div>
@@ -91,7 +91,7 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
 .flipped { transform: rotate(180deg); }
 .record-btn { height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: var(--soft); color: var(--text-accent); font-size: 15px; font-weight: 700; }
 .body { margin: 8px 8px 0 0; }
-.item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); text-decoration: none; color: inherit; }
 .item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .item-name { font-size: 15px; font-weight: 500; }
 .item-portion { font-size: 12px; color: var(--text-accent); font-weight: 700; }
