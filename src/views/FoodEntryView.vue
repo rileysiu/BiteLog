@@ -4,11 +4,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFoodsStore } from '../stores/foods'
 import { useDiaryStore } from '../stores/diary'
 import { MEALS, suggestMeal, mealName } from '../utils/meal'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const foods = useFoodsStore()
 const diary = useDiaryStore()
+const auth = useAuthStore()
 
 onMounted(() => foods.load())
 
@@ -80,7 +82,7 @@ const r1 = (v) => Math.round(v * 10) / 10
 const portionText = computed(() =>
   unit.value?.key === 'gram' ? `${qty.value} 克` : `${qty.value} ${unit.value?.label}（${Math.round(grams.value)} 克）`
 )
-const canAdd = computed(() => grams.value > 0 && date.value && time.value)
+const canAdd = computed(() => auth.isLoggedIn && grams.value > 0 && date.value && time.value)
 
 function add() {
   if (!canAdd.value) return
@@ -190,7 +192,9 @@ function add() {
     </section>
 
     <div class="bottom">
-      <button class="add-btn" :disabled="!canAdd" @click="add">加入{{ mealName(meal) }}</button>
+      <button class="add-btn" :disabled="!canAdd" @click="add">
+        {{ auth.isLoggedIn ? `加入${mealName(meal)}` : '請先登入才能記錄' }}
+      </button>
     </div>
   </template>
 </template>

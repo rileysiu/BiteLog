@@ -10,8 +10,10 @@ import CalendarPopup from '../components/CalendarPopup.vue'
 import { addDays, titleFor } from '../utils/date'
 import { MEALS as meals } from '../utils/meal'
 import { useDiaryStore } from '../stores/diary'
+import { useAuthStore } from '../stores/auth'
 
 const diary = useDiaryStore()
+const auth = useAuthStore()
 const { goals, entries, selectedDate, loggedDates } = storeToRefs(diary)
 
 const calendarOpen = ref(false)
@@ -76,6 +78,11 @@ function shiftWeek(n) {
     @close="calendarOpen = false"
   />
 
+  <section v-if="auth.ready && !auth.isLoggedIn" class="login-hint">
+    <p>登入後就能開始記錄，資料會存在雲端，手機和電腦同步。</p>
+    <RouterLink to="/more" class="login-link">前往登入</RouterLink>
+  </section>
+  
   <div class="stack">
     <CalorieCard :eaten="totals.kcal" :goal="goals.kcal" />
     <MacroCard :totals="totals" :goals="goals" />
@@ -109,4 +116,7 @@ function shiftWeek(n) {
 .segment { display: flex; gap: 2px; padding: 3px; background: #FFFFFF; border-radius: 22px; }
 .segment button { height: 38px; min-width: 64px; padding: 0 14px; border: 0; border-radius: 19px; font-size: 14px; font-weight: 700; background: transparent; color: var(--muted); }
 .segment button.active { background: var(--primary); color: var(--on-primary); }
+.login-hint { margin-top: 12px; padding: 18px 22px; border-radius: 24px; background: var(--soft); display: flex; flex-direction: column; gap: 10px; }
+.login-hint p { margin: 0; font-size: 14px; line-height: 1.6; }
+.login-link { align-self: flex-start; height: 44px; padding: 0 20px; border-radius: 22px; background: var(--primary); color: var(--on-primary); font-size: 14px; font-weight: 700; display: flex; align-items: center; text-decoration: none; }
 </style>
