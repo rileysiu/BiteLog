@@ -104,6 +104,7 @@ async function save() {
         <span class="unit">卡</span>
       </div>
     </div>
+    <RouterLink to="/goals/calculator" class="calc-link">依身體資料計算建議值</RouterLink>
   </section>
 
   <section class="card">
@@ -184,4 +185,5 @@ async function save() {
 .ratio-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--track); }
 .sum { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--soft); font-size: 13px; font-weight: 700; }
 .sum.bad { background: #FDE8DF; color: #9A3412; }
+.calc-link { height: 44px; border-radius: 22px; background: var(--soft); color: var(--text-accent); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
 </style>

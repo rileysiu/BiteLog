@@ -144,7 +144,7 @@ useThemeStore()
   text-decoration: none;
   color: var(--ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .tab.router-link-exact-active {
