@@ -1,10 +1,14 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import { ref, computed } from 'vue'
 
 const props = defineProps({
   title: String,
+  mealKey: String,
   items: Array,
 })
+
+const router = useRouter()
 
 const open = ref(true)
 
@@ -46,7 +50,7 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
       >
         <svg :class="{ flipped: open }" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
       </button>
-      <button class="record-btn">記錄</button>
+      <button class="record-btn" @click="router.push({ path: '/add', query: { meal: mealKey } })">記錄</button>
     </div>
 
     <div v-if="hasItems && open" class="body">

@@ -7,6 +7,7 @@ import TimelineList from '../components/TimelineList.vue'
 import WeekStrip from '../components/WeekStrip.vue'
 import CalendarPopup from '../components/CalendarPopup.vue'
 import { todayKey, addDays, titleFor } from '../utils/date'
+import { MEALS as meals } from '../utils/meal'
 
 const today = todayKey()
 const yesterday = addDays(today, -1)
@@ -46,13 +47,6 @@ const totals = computed(() => {
     { kcal: 0, carb: 0, fat: 0, protein: 0 }
   )
 })
-
-const meals = [
-  { key: 'breakfast', name: '早餐' },
-  { key: 'lunch', name: '午餐' },
-  { key: 'dinner', name: '晚餐' },
-  { key: 'snack', name: '點心' },
-]
 
 const mealGroups = computed(() =>
   meals.map((m) => ({
@@ -111,7 +105,7 @@ function shiftWeek(n) {
     </div>
 
     <template v-if="viewMode === 'meal'">
-      <MealCard v-for="g in mealGroups" :key="g.key" :title="g.name" :items="g.items" />
+      <MealCard v-for="g in mealGroups" :key="g.key" :title="g.name" :meal-key="g.key" :items="g.items" />
     </template>
     <TimelineList v-else :entries="dayEntries" />
   </div>

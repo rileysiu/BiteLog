@@ -1,5 +1,8 @@
 <script setup>
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
 </script>
 
 <template>
@@ -7,13 +10,13 @@ import { RouterView, RouterLink } from 'vue-router'
     <RouterView />
   </main>
 
-  <div class="bottom-bar">
+    <div v-if="!route.meta.hideNav" class="bottom-bar">
     <nav class="tabs">
       <RouterLink to="/" class="tab">今天</RouterLink>
       <RouterLink to="/progress" class="tab">進展</RouterLink>
       <RouterLink to="/more" class="tab">更多</RouterLink>
     </nav>
-    <button class="fab" aria-label="新增記錄">+</button>
+    <button class="fab" aria-label="新增記錄" @click="router.push('/add')">+</button>
   </div>
 </template>
 
