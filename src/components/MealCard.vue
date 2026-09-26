@@ -72,7 +72,7 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
             複製
           </button>
-          <button class="chip">
+          <button class="chip" @click="router.push({ name: 'saveMeal', query: { date: diary.selectedDate, meal: mealKey } })">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v16l-6-4-6 4z" /></svg>
             儲存
           </button>

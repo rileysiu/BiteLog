@@ -3,10 +3,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFoodsStore } from '../stores/foods'
 import { MEALS, suggestMeal, mealName } from '../utils/meal'
+import { useDiaryStore } from '../stores/diary'
+import { useMealsStore } from '../stores/meals'
 
 const route = useRoute()
 const router = useRouter()
 const foods = useFoodsStore()
+const diary = useDiaryStore()
+const savedMeals = useMealsStore()
+
+const mealKcal = (m) => Math.round(m.items.reduce((s, i) => s + (i.kcal || 0), 0))
+
+function addSavedMeal(m) {
+  diary.copyEntries(m.items, { date: diary.selectedDate, meal: meal.value, time: nowText })
+  router.push('/')
+}
 
 const now = new Date()
 const pad = (n) => String(n).padStart(2, '0')
@@ -56,7 +67,21 @@ function close() {
   <div class="results">
     <p v-if="foods.status === 'loading'" class="empty">載入食品資料中…</p>
     <p v-else-if="foods.status === 'error'" class="empty">食品資料載入失敗，請重新整理頁面</p>
-    <p v-else-if="!query.trim()" class="empty">輸入食品名稱開始搜尋，例如：吐司、雞蛋、白飯</p>
+    <template v-else-if="!query.trim()">
+      <template v-if="savedMeals.list.length">
+        <h2 class="section-title">我的餐點</h2>
+        <div v-for="m in savedMeals.list" :key="m.id" class="item">
+          <RouterLink :to="{ name: 'meal', params: { id: m.id } }" class="item-info link">
+            <div class="item-name">{{ m.name }}</div>
+            <div class="item-meta">{{ m.items.length }} 項 · {{ mealKcal(m) }} 卡</div>
+          </RouterLink>
+          <button class="add-btn" :aria-label="'加入 ' + m.name" @click="addSavedMeal(m)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+        </div>
+      </template>
+      <p class="empty">輸入食品名稱開始搜尋，例如：吐司、雞蛋、白飯</p>
+    </template>
     <p v-else-if="results.length === 0" class="empty">找不到「{{ query }}」，之後可以新增自訂食品</p>
 
     <div v-for="f in results" :key="f.id" class="item">
@@ -99,4 +124,6 @@ function close() {
 .item-meta { font-size: 12px; color: var(--muted); }
 .portion { color: var(--text-accent); font-weight: 700; }
 .add-btn { width: 44px; height: 44px; border: 0; border-radius: 22px; background: var(--soft); color: var(--text-accent); padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-title { font-size: 14px; font-weight: 900; margin: 4px 4px 0; }
+.link { text-decoration: none; color: inherit; }
 </style> 

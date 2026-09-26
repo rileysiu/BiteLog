@@ -7,6 +7,8 @@ import FoodEntryView from '../views/FoodEntryView.vue'
 import GoalsView from '../views/GoalsView.vue'
 import WeightLogView from '../views/WeightLogView.vue'
 import CopyMealView from '../views/CopyMealView.vue'
+import SaveMealView from '../views/SaveMealView.vue'
+import MealDetailView from '../views/MealDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,6 +22,8 @@ const router = createRouter({
     { path: '/weight', name: 'weight', component: WeightLogView, meta: { hideNav: true } },
     { path: '/entry/:id', name: 'editEntry', component: FoodEntryView, meta: { hideNav: true } },
     { path: '/copy', name: 'copy', component: CopyMealView, meta: { hideNav: true } },
+    { path: '/save-meal', name: 'saveMeal', component: SaveMealView, meta: { hideNav: true } },
+    { path: '/meals/:id', name: 'meal', component: MealDetailView, meta: { hideNav: true } },
   ],
 })
 

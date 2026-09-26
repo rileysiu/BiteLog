@@ -100,18 +100,18 @@ export const useDiaryStore = defineStore('diary', () => {
     })
   }
 
-    function copyEntries(list, { date, meal }) {
+  function copyEntries(list, { date, meal, time }) {
     if (!auth.user || list.length === 0) return
     saveError.value = ''
     const col = collection(db, 'users', auth.user.uid, 'entries')
     const batch = writeBatch(db)
     for (const e of list) {
       const { id, createdAt, updatedAt, ...rest } = e
-      batch.set(doc(col), { ...rest, date, meal, createdAt: serverTimestamp() })
+      batch.set(doc(col), { ...rest, date, meal, time: time ?? rest.time, createdAt: serverTimestamp() })
     }
     batch.commit().catch((err) => {
       console.error(err)
-      saveError.value = '複製失敗，請檢查網路後再試一次'
+      saveError.value = '加入失敗，請檢查網路後再試一次'
     })
   }
 
