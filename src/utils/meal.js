@@ -1,8 +1,8 @@
 export const MEALS = [
-  { key: 'breakfast', name: '早餐' },
-  { key: 'lunch', name: '午餐' },
-  { key: 'dinner', name: '晚餐' },
-  { key: 'snack', name: '點心' },
+  { key: 'breakfast', name: '早餐', color: '#D08A1E' },
+  { key: 'lunch', name: '午餐', color: '#2BA59A' },
+  { key: 'dinner', name: '晚餐', color: '#4F55C9' },
+  { key: 'snack', name: '點心', color: '#C8467A' },
 ]
 
 export function suggestMeal(date = new Date()) {

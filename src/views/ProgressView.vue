@@ -2,7 +2,9 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import PeriodPicker from '../components/PeriodPicker.vue'
 import OverviewTab from '../components/progress/OverviewTab.vue'
+import KcalTab from '../components/progress/KcalTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,8 +18,15 @@ const TABS = [
   { key: 'macros', label: '主要營養素' },
 ]
 
-// 目前的分頁記在網址上，例如 /progress?tab=kcal
+const TABS_WITH_PERIOD = ['kcal', 'nutrients', 'macros']
+
 const tab = computed(() => route.query.tab || 'overview')
+
+// 期間也記在網址上，例如 /progress?tab=kcal&period=week
+const period = computed({
+  get: () => route.query.period || 'today',
+  set: (value) => router.replace({ query: { ...route.query, period: value } }),
+})
 
 function setTab(key) {
   router.replace({ query: { ...route.query, tab: key } })
@@ -45,7 +54,10 @@ function setTab(key) {
   </section>
 
   <template v-else>
+    <PeriodPicker v-if="TABS_WITH_PERIOD.includes(tab)" v-model="period" />
+
     <OverviewTab v-if="tab === 'overview'" @go="setTab" />
+    <KcalTab v-else-if="tab === 'kcal'" :period="period" />
     <p v-else class="placeholder">這個分頁會在接下來的步驟完成。</p>
   </template>
 </template>
