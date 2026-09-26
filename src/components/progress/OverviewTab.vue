@@ -124,7 +124,7 @@ const arrow = (n) => (n > 0 ? '↑ ' : n < 0 ? '↓ ' : '')
 .stat-label { font-size: 12px; color: var(--muted); }
 .stat-value { font-size: 26px; font-weight: 900; margin-top: 4px; }
 .stat-value.medium { font-size: 22px; }
-.stat-unit { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; }
+.stat-unit { font-family: 'Huninn', sans-serif; font-size: 14px; }
 .stat-empty { font-size: 13px; color: var(--muted); }
 .weight-stats { display: flex; flex-direction: column; gap: 10px; }
 .small-value { font-size: 18px; font-weight: 900; margin-top: 2px; }

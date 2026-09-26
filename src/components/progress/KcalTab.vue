@@ -137,7 +137,7 @@ const ranking = computed(() => {
 .head { padding-left: 6px; }
 .head-label { font-size: 13px; color: var(--muted); }
 .head-value { font-size: 30px; font-weight: 900; margin: 2px 0; }
-.unit { font-family: 'Noto Sans TC', sans-serif; font-size: 16px; }
+.unit { font-family: 'Huninn', sans-serif; font-size: 16px; }
 .head-sub { font-size: 13px; color: var(--muted); }
 .head-sub.over { color: #C2410C; }
 .donut-label { font-size: 12px; color: var(--muted); }

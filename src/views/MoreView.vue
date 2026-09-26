@@ -1,9 +1,14 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../stores/auth'
+import { useThemeStore } from '../stores/theme'
+import { THEMES, THEME_ORDER } from '../utils/themes'
 
 const authStore = useAuthStore()
 const { user, ready, error, isLoggedIn } = storeToRefs(authStore)
+const themeStore = useThemeStore()
+const { current: currentTheme } = storeToRefs(themeStore)
+
 </script>
 
 <template>
@@ -35,6 +40,37 @@ const { user, ready, error, isLoggedIn } = storeToRefs(authStore)
       <button class="logout-btn" @click="authStore.logout()">登出</button>
     </template>
   </section>
+  <section class="card theme-card">
+    <div class="theme-head">
+      <h2 class="card-title">主題</h2>
+      <span class="muted">目前：{{ THEMES[currentTheme].name }}</span>
+    </div>
+    <div class="swatches">
+      <button
+        v-for="key in THEME_ORDER"
+        :key="key"
+        class="swatch"
+        :aria-pressed="currentTheme === key"
+        :aria-label="THEMES[key].name + '主題'"
+        @click="themeStore.choose(key)"
+      >
+        <span
+          class="circle"
+          :class="{ selected: currentTheme === key }"
+          :style="{ background: THEMES[key].primary, color: '#FFFFFF', '--ring': THEMES[key].primary }"
+          >
+          <!-- :style="{ background: THEMES[key].primary, color: THEMES[key].onPrimary, '--ring': THEMES[key].primary }" -->
+          <svg v-if="currentTheme === key" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10" /></svg>
+        </span>
+        <span class="swatch-name" :class="{ strong: currentTheme === key }">{{ THEMES[key].name }}</span>
+      </button>
+    </div>
+    <div class="preview">
+      <div class="preview-track"><div class="preview-fill"></div></div>
+      <span class="preview-chip">記錄</span>
+      <span class="preview-fab">+</span>
+    </div>
+  </section>
   <section class="card links">
     <RouterLink to="/goals" class="link-row">
       <span class="link-text">
@@ -65,4 +101,17 @@ const { user, ready, error, isLoggedIn } = storeToRefs(authStore)
 .link-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .link-label { font-size: 15px; font-weight: 700; color: var(--ink); }
 .link-sub { font-size: 12px; color: var(--muted); }
+.theme-card { margin-top: 12px; }
+.theme-head { display: flex; align-items: baseline; justify-content: space-between; }
+.swatches { display: grid; grid-template-columns: repeat(5, 1fr); row-gap: 6px; }
+.swatch { height: 76px; border: 0; background: transparent; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--ink); }
+.circle { width: 48px; height: 48px; border-radius: 24px; display: flex; align-items: center; justify-content: center; border: 3px solid transparent; }
+.circle.selected { border-color: #FFFFFF; box-shadow: 0 0 0 2px var(--ring); }
+.swatch-name { font-size: 13px; }
+.swatch-name.strong { font-weight: 900; }
+.preview { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--bg); }
+.preview-track { flex: 1; height: 8px; border-radius: 4px; background: #FFFFFF; overflow: hidden; }
+.preview-fill { width: 62%; height: 8px; border-radius: 4px; background: var(--primary); }
+.preview-chip { height: 32px; padding: 0 14px; border-radius: 16px; background: var(--soft); color: var(--text-accent); font-size: 13px; font-weight: 700; display: flex; align-items: center; }
+.preview-fab { width: 32px; height: 32px; border-radius: 16px; background: var(--primary); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; }
 </style>

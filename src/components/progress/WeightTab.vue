@@ -142,7 +142,7 @@ const history = computed(() =>
 .summary { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .label { font-size: 13px; color: var(--muted); }
 .big { font-size: 32px; font-weight: 900; margin-top: 4px; }
-.unit { font-family: 'Noto Sans TC', sans-serif; font-size: 16px; }
+.unit { font-family: 'Huninn', sans-serif; font-size: 16px; }
 .unit.small { font-size: 12px; font-weight: 500; }
 .right { text-align: right; }
 .strong { font-size: 13px; font-weight: 700; margin-top: 4px; }

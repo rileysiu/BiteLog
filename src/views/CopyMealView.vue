@@ -164,7 +164,7 @@ function copy() {
 .pick-name { font-size: 15px; font-weight: 500; }
 .pick-sub { font-size: 12px; color: var(--muted); }
 .portion { color: var(--text-accent); font-weight: 700; }
-.check { width: 28px; height: 28px; border-radius: 14px; border: 2px solid #C9CEDA; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--on-primary); }
+.check { width: 28px; height: 28px; border-radius: 14px; border: 2px solid #C9CEDA; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #FFFFFF; }
 .check.on { border-color: transparent; background: var(--primary); }
 .meals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .meals button { height: 44px; border: 0; border-radius: 22px; background: var(--bg); color: var(--ink); font-size: 14px; font-weight: 700; }

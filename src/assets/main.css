@@ -19,7 +19,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Noto Sans TC', system-ui, sans-serif;
+  font-family: 'Huninn', 'PingFang TC', 'Microsoft JhengHei', system-ui, sans-serif;
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -29,6 +29,6 @@ input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=number] { appearance: textfield; }
 
-.num { font-family: 'Nunito', 'Noto Sans TC', sans-serif; }
+.num { font-family: 'Nunito', 'Huninn', sans-serif; }
 
 #app { max-width: 480px; margin: 0 auto; min-height: 100vh; }

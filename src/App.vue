@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { usePickerStore } from './stores/picker'
+import { useThemeStore } from './stores/theme'
 
 const route = useRoute()
 const fabOpen = ref(false)
@@ -23,6 +24,7 @@ watch(
 )
 
 useAuthStore().init()
+useThemeStore()
 </script>
 
 <template>
@@ -156,7 +158,8 @@ useAuthStore().init()
   border-radius: 32px;
   border: 0;
   background: var(--primary);
-  color: var(--on-primary);
+  /*color: var(--on-primary);*/
+  color: #FFFFFF;
   font-size: 32px;
   flex-shrink: 0;
   box-shadow: 0 6px 18px rgba(22, 33, 58, 0.22);
