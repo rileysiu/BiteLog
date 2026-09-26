@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { collection, doc, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuthStore } from './auth'
 import { todayKey } from '../utils/date'
@@ -100,10 +100,25 @@ export const useDiaryStore = defineStore('diary', () => {
     })
   }
 
+    function copyEntries(list, { date, meal }) {
+    if (!auth.user || list.length === 0) return
+    saveError.value = ''
+    const col = collection(db, 'users', auth.user.uid, 'entries')
+    const batch = writeBatch(db)
+    for (const e of list) {
+      const { id, createdAt, updatedAt, ...rest } = e
+      batch.set(doc(col), { ...rest, date, meal, createdAt: serverTimestamp() })
+    }
+    batch.commit().catch((err) => {
+      console.error(err)
+      saveError.value = '複製失敗，請檢查網路後再試一次'
+    })
+  }
+
   async function saveGoals(data) {
     if (!auth.user) throw new Error('尚未登入')
     await setDoc(doc(db, 'users', auth.user.uid, 'settings', 'goals'), data, { merge: true })
   }
 
-  return { goalSettings, goals, entries, selectedDate, status, saveError, loggedDates, addEntry, updateEntry, deleteEntry, saveGoals }
+  return { goalSettings, goals, entries, selectedDate, status, saveError, loggedDates, addEntry, updateEntry, deleteEntry, copyEntries, saveGoals }
 })
