@@ -1,6 +1,6 @@
 <template>
-  <h1 class="title">更多</h1>
-  <p>這裡之後會放登入、主題和設定。</p>
+  <h1 class="title">今天</h1>
+  <p>這裡之後會放今天的飲食記錄。</p>
 </template>
 
 <style scoped>

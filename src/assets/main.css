@@ -1,0 +1,34 @@
+:root {
+  --primary: #2563EB;
+  --on-primary: #FFFFFF;
+  --text-accent: #2563EB;
+  --soft: #E6EEFD;
+  --bg: #EEF2F8;
+  --ink: #16213A;
+  --muted: #5B6478;
+  --track: #ECEEF3;
+  --line: #EEF0F4;
+  --carb: #2BA59A;
+  --fat: #8E4BC8;
+  --protein: #E39B2D;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Noto Sans TC', system-ui, sans-serif;
+}
+
+button { font-family: inherit; cursor: pointer; }
+button, label { white-space: nowrap; }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { appearance: textfield; }
+
+.num { font-family: 'Nunito', 'Noto Sans TC', sans-serif; }
+
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; }
