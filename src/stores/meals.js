@@ -65,5 +65,14 @@ export const useMealsStore = defineStore('meals', () => {
     deleteDoc(doc(db, 'users', auth.user.uid, 'meals', id)).catch((err) => console.error(err))
   }
 
-  return { list, status, getById, saveMeal, renameMeal, deleteMeal }
+  function addItem(id, item) {
+    const m = getById(id)
+    if (!auth.user || !m) return
+    updateDoc(doc(db, 'users', auth.user.uid, 'meals', id), {
+      items: [...m.items, item],
+      updatedAt: serverTimestamp(),
+    }).catch((err) => console.error(err))
+  }
+
+  return { list, status, getById, saveMeal, renameMeal, deleteMeal, addItem }
 })

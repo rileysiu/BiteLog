@@ -10,6 +10,7 @@ import CopyMealView from '../views/CopyMealView.vue'
 import SaveMealView from '../views/SaveMealView.vue'
 import MealDetailView from '../views/MealDetailView.vue'
 import CustomFoodView from '../views/CustomFoodView.vue'
+import RecipeView from '../views/RecipeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,6 +28,8 @@ const router = createRouter({
     { path: '/meals/:id', name: 'meal', component: MealDetailView, meta: { hideNav: true } },
     { path: '/custom-food/new', name: 'newCustomFood', component: CustomFoodView, meta: { hideNav: true } },
     { path: '/custom-food/:id', name: 'editCustomFood', component: CustomFoodView, meta: { hideNav: true } },
+    { path: '/recipe/new', name: 'newRecipe', component: RecipeView, meta: { hideNav: true } },
+    { path: '/recipe/:id', name: 'editRecipe', component: RecipeView, meta: { hideNav: true } },
   ],
 })
 

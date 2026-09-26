@@ -6,6 +6,8 @@ import { MEALS, suggestMeal, mealName } from '../utils/meal'
 import { useDiaryStore } from '../stores/diary'
 import { useMealsStore } from '../stores/meals'
 import { useCustomFoodsStore } from '../stores/customFoods'
+import { useRecipesStore } from '../stores/recipes'
+import { usePickerStore } from '../stores/picker'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +15,13 @@ const foods = useFoodsStore()
 const diary = useDiaryStore()
 const savedMeals = useMealsStore()
 const custom = useCustomFoodsStore()
+const recipes = useRecipesStore()
+const picker = usePickerStore()
+
+const pageTitle = computed(() => {
+  if (!picker.isPicking) return '新增食品'
+  return picker.isForRecipe ? '選擇食材' : '加入食品到餐點'
+})
 
 const mealKcal = (m) => Math.round(m.items.reduce((s, i) => s + (i.kcal || 0), 0))
 
@@ -29,7 +38,13 @@ const autoPicked = !route.query.meal
 const meal = ref(route.query.meal || suggestMeal(now))
 const query = ref('')
 
-const results = computed(() => [...custom.search(query.value), ...foods.search(query.value)].slice(0, 50))
+const results = computed(() =>
+  [
+    ...custom.search(query.value),
+    ...(picker.isForRecipe ? [] : recipes.search(query.value)),
+    ...foods.search(query.value),
+  ].slice(0, 50)
+)
 
 onMounted(() => foods.load())
 
@@ -44,11 +59,11 @@ function close() {
     <button class="icon-btn" @click="close" aria-label="關閉">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
     </button>
-    <h1 class="page-title">新增食品</h1>
+    <h1 class="page-title">{{ pageTitle }}</h1>
     <div class="spacer"></div>
   </div>
 
-  <div class="meals">
+  <div v-if="!picker.isPicking" class="meals">
     <button
       v-for="m in MEALS"
       :key="m.key"
@@ -59,7 +74,7 @@ function close() {
       {{ m.name }}
     </button>
   </div>
-  <p v-if="autoPicked" class="hint">現在 {{ nowText }}，已自動選擇「{{ mealName(meal) }}」</p>
+  <p v-if="autoPicked && !picker.isPicking" class="hint">現在 {{ nowText }}，已自動選擇「{{ mealName(meal) }}」</p>
 
   <label class="search">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
@@ -70,7 +85,7 @@ function close() {
     <p v-if="foods.status === 'loading'" class="empty">載入食品資料中…</p>
     <p v-else-if="foods.status === 'error'" class="empty">食品資料載入失敗，請重新整理頁面</p>
     <template v-else-if="!query.trim()">
-      <template v-if="savedMeals.list.length">
+      <template v-if="savedMeals.list.length && !picker.isPicking">
         <h2 class="section-title">我的餐點</h2>
         <div v-for="m in savedMeals.list" :key="m.id" class="item">
           <RouterLink :to="{ name: 'meal', params: { id: m.id } }" class="item-info link">
@@ -93,6 +108,19 @@ function close() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       </div>
+      <template v-if="!picker.isForRecipe">
+        <h2 class="section-title">我的食譜</h2>
+        <RouterLink :to="{ name: 'newRecipe' }" class="new-btn">＋ 建立食譜</RouterLink>
+        <div v-for="r in recipes.list" :key="r.id" class="item">
+          <RouterLink :to="{ name: 'editRecipe', params: { id: r.id } }" class="item-info link">
+            <div class="item-name">{{ r.name }}</div>
+            <div class="item-meta">{{ r.raw.servings }} 份 · 每份 {{ Math.round((r.n.kcal ?? 0) * r.unitGrams / 100) }} 卡</div>
+          </RouterLink>
+          <button class="add-btn" :aria-label="'加入 ' + r.name" @click="router.push({ name: 'food', params: { id: r.id }, query: { meal } })">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+        </div>
+      </template>
       <p class="empty">輸入食品名稱開始搜尋，例如：吐司、雞蛋、白飯</p>
     </template>
     <template v-else-if="results.length === 0">
@@ -102,7 +130,7 @@ function close() {
 
     <div v-for="f in results" :key="f.id" class="item">
       <div class="item-info">
-        <div class="item-name"><span v-if="f.source === 'custom'" class="mine">我的食品</span>{{ f.name }}</div>
+        <div class="item-name"><span v-if="f.source" class="mine">{{ f.source === 'recipe' ? '我的食譜' : '我的食品' }}</span>{{ f.name }}</div>
         <div v-if="f.alias" class="item-alias">俗名：{{ f.alias }}</div>
         <div class="item-meta">
           <span class="portion">每 100 {{ f.baseLabel || '克' }}</span> · {{ Math.round(f.n.kcal ?? 0) }} 卡

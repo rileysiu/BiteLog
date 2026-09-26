@@ -2,15 +2,23 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMealsStore } from '../stores/meals'
+import { usePickerStore } from '../stores/picker'
 
 const route = useRoute()
 const router = useRouter()
 const meals = useMealsStore()
+const picker = usePickerStore()
+
+function addFood() {
+  picker.start({ type: 'meal', id: meal.value.id })
+  router.push({ name: 'add' })
+}
 
 const meal = computed(() => meals.getById(route.params.id))
 const total = computed(() => Math.round((meal.value?.items ?? []).reduce((s, i) => s + (i.kcal || 0), 0)))
 
 const showToast = ref(route.query.saved === '1')
+if (showToast.value) router.replace({ query: {} })
 const menuOpen = ref(false)
 const confirmDelete = ref(false)
 const renaming = ref(false)
@@ -77,6 +85,9 @@ function onDelete() {
         </div>
         <div class="num item-kcal">{{ item.kcal }}</div>
       </div>
+      <button class="add-row" @click="addFood">
+        <span class="plus">＋</span>添加食品
+      </button>
     </section>
   </template>
 
@@ -134,4 +145,6 @@ function onDelete() {
 .sheet-btn:disabled { background: #C9CEDA; color: var(--muted); }
 .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { height: 50px; border: 0; border-radius: 14px; background: var(--soft); padding: 0 14px; font-size: 16px; color: var(--ink); font-family: inherit; }
+.add-row { width: 100%; min-height: 56px; border: 0; border-top: 1px solid var(--line); background: transparent; display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 700; color: var(--ink); padding: 0; }
+.plus { width: 28px; height: 28px; border-radius: 14px; background: var(--soft); color: var(--text-accent); display: flex; align-items: center; justify-content: center; }
 </style>

@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { usePickerStore } from './stores/picker'
 
 const route = useRoute()
 const fabOpen = ref(false)
@@ -10,6 +11,16 @@ const fabOpen = ref(false)
 watch(() => route.fullPath, () => {
   fabOpen.value = false
 })
+
+const picker = usePickerStore()
+const PICK_ROUTES = ['add', 'food', 'newCustomFood', 'editCustomFood']
+
+watch(
+  () => route.name,
+  (name) => {
+    if (!PICK_ROUTES.includes(name)) picker.finish()
+  }
+)
 
 useAuthStore().init()
 </script>

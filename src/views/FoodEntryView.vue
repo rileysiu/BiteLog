@@ -6,6 +6,9 @@ import { useCustomFoodsStore } from '../stores/customFoods'
 import { useDiaryStore } from '../stores/diary'
 import { useAuthStore } from '../stores/auth'
 import { MEALS, suggestMeal, mealName } from '../utils/meal'
+import { useRecipesStore } from '../stores/recipes'
+import { useMealsStore } from '../stores/meals'
+import { usePickerStore } from '../stores/picker'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,18 +17,24 @@ const custom = useCustomFoodsStore()
 const diary = useDiaryStore()
 const auth = useAuthStore()
 
+const isEdit = computed(() => route.name === 'editEntry')
+const recipes = useRecipesStore()
+const meals = useMealsStore()
+const picker = usePickerStore()
+const picking = computed(() => picker.isPicking && !isEdit.value)
+
 onMounted(() => foods.load())
 
-const isEdit = computed(() => route.name === 'editEntry')
 const entry = computed(() => (isEdit.value ? diary.entries.find((e) => e.id === route.params.id) : null))
 const foodId = computed(() => (isEdit.value ? entry.value?.foodId : route.params.id))
 // 先找食藥署資料庫，找不到再找自訂食品
 const food = computed(() => {
   const id = foodId.value
   if (!id) return null
-  return foods.getById(id) ?? custom.getById(id) ?? null
+  return foods.getById(id) ?? custom.getById(id) ?? recipes.getById(id) ?? null
 })
 const isCustom = computed(() => food.value?.source === 'custom')
+const sourceLabel = computed(() => ({ custom: '我的食品', recipe: '我的食譜' })[food.value?.source] ?? '食藥署資料庫')
 const baseLabel = computed(() => food.value?.baseLabel ?? '克')
 
 const now = new Date()
@@ -112,7 +121,7 @@ const portionText = computed(() => {
   if (!u) return ''
   return u.key === 'gram' ? `${qty.value} ${baseLabel.value}` : `${qty.value} ${u.label}（${Math.round(grams.value)} ${baseLabel.value}）`
 })
-const canSave = computed(() => auth.isLoggedIn && grams.value > 0 && date.value && time.value)
+const canSave = computed(() => auth.isLoggedIn && grams.value > 0 && (picking.value || (date.value && time.value)))
 
 function buildEntry() {
   const s = scaled.value
@@ -137,6 +146,14 @@ function buildEntry() {
 
 function save() {
   if (!canSave.value) return
+  if (picking.value) {
+    const { date: _d, meal: _m, time: _t, ...item } = buildEntry()
+    if (picker.isForRecipe) recipes.addDraftIngredient(item)
+    else meals.addItem(picker.target.id, item)
+    picker.finish()
+    router.go(-2)
+    return
+  }
   const data = buildEntry()
   if (isEdit.value) {
     diary.updateEntry(entry.value.id, data)
@@ -161,6 +178,7 @@ function onDelete() {
 
 const saveLabel = computed(() => {
   if (!auth.isLoggedIn) return '請先登入才能記錄'
+  if (picking.value) return picker.isForRecipe ? '加入食譜' : '加入餐點'
   return isEdit.value ? '儲存修改' : `加入${mealName(meal.value)}`
 })
 </script>
@@ -192,7 +210,7 @@ const saveLabel = computed(() => {
 
   <template v-else>
     <div class="head">
-      <span class="badge" :class="{ custom: isCustom }">{{ isCustom ? '我的食品' : '食藥署資料庫' }}</span>
+      <span class="badge" :class="{ custom: food.source }">{{ sourceLabel }}</span>
       <h2 class="food-name">{{ food.name }}</h2>
       <p class="food-desc">{{ food.desc }}</p>
     </div>
@@ -216,29 +234,31 @@ const saveLabel = computed(() => {
         </button>
       </div>
 
-      <div class="field-label">餐別</div>
-      <div class="meals">
-        <button
-          v-for="m in MEALS"
-          :key="m.key"
-          :class="{ active: meal === m.key }"
-          :aria-pressed="meal === m.key"
-          @click="meal = m.key"
-        >
-          {{ m.name }}
-        </button>
-      </div>
+      <template v-if="!picking">
+        <div class="field-label">餐別</div>
+        <div class="meals">
+          <button
+            v-for="m in MEALS"
+            :key="m.key"
+            :class="{ active: meal === m.key }"
+            :aria-pressed="meal === m.key"
+            @click="meal = m.key"
+          >
+            {{ m.name }}
+          </button>
+        </div>
 
-      <div class="dt">
-        <div>
-          <label for="date" class="field-label">日期</label>
-          <input id="date" v-model="date" type="date" class="field" />
+        <div class="dt">
+          <div>
+            <label for="date" class="field-label">日期</label>
+            <input id="date" v-model="date" type="date" class="field" />
+          </div>
+          <div>
+            <label for="time" class="field-label">進食時間</label>
+            <input id="time" v-model="time" type="time" class="field" />
+          </div>
         </div>
-        <div>
-          <label for="time" class="field-label">進食時間</label>
-          <input id="time" v-model="time" type="time" class="field" />
-        </div>
-      </div>
+      </template>
     </section>
 
     <section class="card">
