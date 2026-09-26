@@ -1,64 +1,91 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, addDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuthStore } from './auth'
 import { todayKey } from '../utils/date'
 
+const DEFAULT_GOALS = { kcal: 1904, carbPct: 46, fatPct: 30, proteinPct: 24, weightGoal: null }
+
 export const useDiaryStore = defineStore('diary', () => {
   const auth = useAuthStore()
 
-  const goals = ref({ kcal: 1904, carb: 219, fat: 63, protein: 114 })
+  const goalSettings = ref({ ...DEFAULT_GOALS })
   const entries = ref([])
   const selectedDate = ref(todayKey())
   const status = ref('idle')
   const saveError = ref('')
 
-  let unsubscribe = null
+  let unsubscribers = []
 
   function stopListening() {
-    if (unsubscribe) {
-      unsubscribe()
-      unsubscribe = null
-    }
+    unsubscribers.forEach((stop) => stop())
+    unsubscribers = []
   }
 
   function listen(uid) {
     stopListening()
     if (!uid) {
       entries.value = []
+      goalSettings.value = { ...DEFAULT_GOALS }
       status.value = 'idle'
       return
     }
     status.value = 'loading'
-    const ref = collection(db, 'users', uid, 'entries')
-    unsubscribe = onSnapshot(
-      ref,
-      (snapshot) => {
-        entries.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
-        status.value = 'ready'
-      },
-      (err) => {
-        console.error(err)
-        status.value = 'error'
-      }
+
+    unsubscribers.push(
+      onSnapshot(
+        collection(db, 'users', uid, 'entries'),
+        (snapshot) => {
+          entries.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+          status.value = 'ready'
+        },
+        (err) => {
+          console.error(err)
+          status.value = 'error'
+        }
+      )
+    )
+
+    unsubscribers.push(
+      onSnapshot(
+        doc(db, 'users', uid, 'settings', 'goals'),
+        (snap) => {
+          goalSettings.value = { ...DEFAULT_GOALS, ...(snap.exists() ? snap.data() : {}) }
+        },
+        (err) => console.error(err)
+      )
     )
   }
 
-  // 登入的人一改變（登入、登出、換帳號），就重新讀取那個人的資料
   watch(() => auth.user?.uid, (uid) => listen(uid), { immediate: true })
+
+  // 從百分比算出克數，給「今天」頁的儀表板使用
+  const goals = computed(() => {
+    const g = goalSettings.value
+    return {
+      kcal: g.kcal,
+      carb: Math.round((g.kcal * g.carbPct) / 100 / 4),
+      fat: Math.round((g.kcal * g.fatPct) / 100 / 9),
+      protein: Math.round((g.kcal * g.proteinPct) / 100 / 4),
+    }
+  })
 
   const loggedDates = computed(() => [...new Set(entries.value.map((e) => e.date))])
 
   function addEntry(entry) {
     if (!auth.user) return
     saveError.value = ''
-    const ref = collection(db, 'users', auth.user.uid, 'entries')
-    addDoc(ref, { ...entry, createdAt: serverTimestamp() }).catch((err) => {
+    addDoc(collection(db, 'users', auth.user.uid, 'entries'), { ...entry, createdAt: serverTimestamp() }).catch((err) => {
       console.error(err)
       saveError.value = '儲存失敗，請檢查網路後再試一次'
     })
   }
 
-  return { goals, entries, selectedDate, status, saveError, loggedDates, addEntry }
+  async function saveGoals(data) {
+    if (!auth.user) throw new Error('尚未登入')
+    await setDoc(doc(db, 'users', auth.user.uid, 'settings', 'goals'), data, { merge: true })
+  }
+
+  return { goalSettings, goals, entries, selectedDate, status, saveError, loggedDates, addEntry, saveGoals }
 })

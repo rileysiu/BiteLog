@@ -4,6 +4,7 @@ import TodayView from '../views/TodayView.vue'
 import ProgressView from '../views/ProgressView.vue'
 import MoreView from '../views/MoreView.vue'
 import FoodEntryView from '../views/FoodEntryView.vue'
+import GoalsView from '../views/GoalsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,6 +14,7 @@ const router = createRouter({
     { path: '/more', name: 'more', component: MoreView },
     { path: '/add', name: 'add', component: AddFoodView, meta: { hideNav: true } },
     { path: '/add/:id', name: 'food', component: FoodEntryView, meta: { hideNav: true } },
+    { path: '/goals', name: 'goals', component: GoalsView, meta: { hideNav: true } },
 ],
 })
 

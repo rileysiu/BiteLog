@@ -35,6 +35,15 @@ const { user, ready, error, isLoggedIn } = storeToRefs(authStore)
       <button class="logout-btn" @click="authStore.logout()">登出</button>
     </template>
   </section>
+  <section class="card links">
+    <RouterLink to="/goals" class="link-row">
+      <span class="link-text">
+        <span class="link-label">我的目標</span>
+        <span class="link-sub">卡路里、主要營養素、體重目標</span>
+      </span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+    </RouterLink>
+  </section>
 </template>
 
 <style scoped>
@@ -51,4 +60,9 @@ const { user, ready, error, isLoggedIn } = storeToRefs(authStore)
 .name { font-size: 15px; font-weight: 700; }
 .email { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .logout-btn { height: 44px; border: 0; border-radius: 22px; background: var(--bg); color: var(--ink); font-size: 14px; font-weight: 700; }
+.links { margin-top: 12px; padding: 6px 22px; gap: 0; }
+.link-row { min-height: 60px; display: flex; align-items: center; gap: 12px; color: var(--muted); text-decoration: none; }
+.link-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.link-label { font-size: 15px; font-weight: 700; color: var(--ink); }
+.link-sub { font-size: 12px; color: var(--muted); }
 </style>
