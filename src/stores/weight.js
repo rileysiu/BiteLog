@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { collection, doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, doc, onSnapshot, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuthStore } from './auth'
 
@@ -51,5 +51,10 @@ export const useWeightStore = defineStore('weight', () => {
     })
   }
 
-  return { records, latest, recordOn, previousBefore, save }
+  function remove(date) {
+    if (!auth.user) return
+    deleteDoc(doc(db, 'users', auth.user.uid, 'weights', date)).catch((err) => console.error(err))
+  }
+
+  return { records, latest, recordOn, previousBefore, save, remove }
 })

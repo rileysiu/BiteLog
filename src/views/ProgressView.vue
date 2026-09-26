@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth'
 import PeriodPicker from '../components/PeriodPicker.vue'
 import OverviewTab from '../components/progress/OverviewTab.vue'
 import KcalTab from '../components/progress/KcalTab.vue'
+import WeightTab from '../components/progress/WeightTab.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,6 +59,7 @@ function setTab(key) {
 
     <OverviewTab v-if="tab === 'overview'" @go="setTab" />
     <KcalTab v-else-if="tab === 'kcal'" :period="period" />
+    <WeightTab v-else-if="tab === 'weight'" />
     <p v-else class="placeholder">這個分頁會在接下來的步驟完成。</p>
   </template>
 </template>

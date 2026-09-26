@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useWeightStore } from '../stores/weight'
 import { useAuthStore } from '../stores/auth'
 import { todayKey, fromKey } from '../utils/date'
 
+const route = useRoute()
 const router = useRouter()
 const weight = useWeightStore()
 const auth = useAuthStore()
@@ -12,9 +13,11 @@ const auth = useAuthStore()
 const now = new Date()
 const pad = (n) => String(n).padStart(2, '0')
 
-const date = ref(todayKey())
-const time = ref(`${pad(now.getHours())}:${pad(now.getMinutes())}`)
-const kg = ref(weight.latest ? String(weight.latest.kg) : '')
+// 從歷史記錄點進來時，網址會帶著日期，例如 /weight?date=2026-09-20
+const date = ref(route.query.date || todayKey())
+const initial = weight.recordOn(date.value) ?? weight.latest
+const time = ref(weight.recordOn(date.value)?.time ?? `${pad(now.getHours())}:${pad(now.getMinutes())}`)
+const kg = ref(initial ? String(initial.kg) : '')
 const saving = ref(false)
 const error = ref('')
 
@@ -50,6 +53,16 @@ async function save() {
   } finally {
     saving.value = false
   }
+}
+
+const confirmDelete = ref(false)
+function onDelete() {
+  if (!confirmDelete.value) {
+    confirmDelete.value = true
+    return
+  }
+  weight.remove(date.value)
+  router.back()
 }
 </script>
 
@@ -92,6 +105,7 @@ async function save() {
   <p v-if="error" class="notice error">{{ error }}</p>
 
   <div class="bottom">
+    <button v-if="existing" class="delete-btn" @click="onDelete">{{ confirmDelete ? '確定刪除？' : '刪除' }}</button>
     <button class="save-btn" :disabled="!canSave" @click="save">{{ saving ? '儲存中…' : '儲存' }}</button>
   </div>
 </template>
@@ -113,7 +127,8 @@ async function save() {
 .field { width: 100%; height: 48px; border: 0; border-radius: 14px; background: var(--soft); padding: 0 12px; font-size: 15px; color: var(--ink); font-family: inherit; }
 .notice { font-size: 13px; color: var(--muted); margin: 0 6px 12px; }
 .notice.error { color: #B42318; }
-.bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(480px, 100%); padding: 16px 20px 28px; background: var(--bg); }
-.save-btn { width: 100%; height: 56px; border: 0; border-radius: 28px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 900; }
+.bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: min(480px, 100%); padding: 16px 20px 28px; background: var(--bg); display: flex; gap: 10px; }
+.save-btn { flex: 1; height: 56px; border: 0; border-radius: 28px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 900; }
 .save-btn:disabled { background: #C9CEDA; color: var(--muted); }
+.delete-btn { height: 56px; padding: 0 22px; border: 1.5px solid #F3B8AE; border-radius: 28px; background: #FFFFFF; color: #B42318; font-size: 15px; font-weight: 700; }
 </style>
