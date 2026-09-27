@@ -38,13 +38,19 @@ const autoPicked = !route.query.meal
 const meal = ref(route.query.meal || suggestMeal(now))
 const query = ref('')
 
-const results = computed(() =>
-  [
+const results = computed(() => {
+  const list = [
     ...custom.search(query.value),
     ...(picker.isForRecipe ? [] : recipes.search(query.value)),
-    ...foods.search(query.value),
-  ].slice(0, 50)
-)
+    ...foods.search(query.value, 200),
+  ]
+  const counts = diary.pickCounts
+  return list
+    .map((f, i) => ({ f, i, count: counts.get(f.id) ?? 0 }))
+    .sort((a, b) => b.count - a.count || a.i - b.i)
+    .slice(0, 50)
+    .map(({ f, count }) => ({ ...f, pickCount: count }))
+})
 
 onMounted(() => foods.load())
 
@@ -80,6 +86,17 @@ function close() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
     <input v-model="query" type="search" placeholder="搜尋食品名稱或俗名" aria-label="搜尋食品" />
   </label>
+
+  <RouterLink v-if="!picker.isPicking" :to="{ name: 'quickAdd', query: { meal } }" class="quick">
+    <span class="quick-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 13h6l-1 8 8-10h-6z" /></svg>
+    </span>
+    <span class="quick-text">
+      <span class="quick-title">快速加入</span>
+      <span class="quick-sub">不用選食品，直接輸入卡路里</span>
+    </span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+  </RouterLink>
 
   <div class="results">
     <p v-if="foods.status === 'loading'" class="empty">載入食品資料中…</p>
@@ -137,6 +154,7 @@ function close() {
           <template v-if="f.unitGrams"> · 1 份 {{ f.unitGrams }} 克</template>
         </div>
       </div>
+      <span v-if="f.pickCount" class="count">選過 {{ f.pickCount }} 次</span>
       <button
         class="add-btn"
         :aria-label="'加入 ' + f.name"
@@ -172,4 +190,10 @@ function close() {
 .link { text-decoration: none; color: inherit; }
 .new-btn { height: 48px; border: 1.5px dashed #9AA2B3; border-radius: 24px; color: var(--text-accent); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .mine { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--soft); color: var(--text-accent); margin-right: 6px; }
+.count { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: var(--track); color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+.quick { display: flex; align-items: center; gap: 12px; min-height: 56px; margin-top: 12px; padding: 8px 14px 8px 10px; border-radius: 20px; background: #FFFFFF; color: var(--muted); text-decoration: none; }
+.quick-icon { width: 40px; height: 40px; border-radius: 20px; background: var(--soft); color: var(--text-accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.quick-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.quick-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.quick-sub { font-size: 12px; font-weight: 700; color: var(--muted); }
 </style>

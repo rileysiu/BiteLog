@@ -36,17 +36,17 @@ useThemeStore()
     <div v-if="fabOpen" class="backdrop" @click="fabOpen = false"></div>
 
     <div v-if="fabOpen" class="fab-menu">
-      <RouterLink to="/weight" class="fab-item">
-        <span class="fab-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M9 9.5a4 4 0 0 1 6 0M12 12l1.5-2.5" /></svg>
-        </span>
-        記錄體重
-      </RouterLink>
       <RouterLink to="/add" class="fab-item">
         <span class="fab-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18a9 9 0 0 1-18 0z" /><path d="M9 7c0-2 2-2 2-4M14 7c0-2 2-2 2-4" /></svg>
         </span>
         記錄飲食
+      </RouterLink>
+      <RouterLink to="/weight" class="fab-item">
+        <span class="fab-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4" /><path d="M9 9.5a4 4 0 0 1 6 0M12 12l1.5-2.5" /></svg>
+        </span>
+        記錄體重
       </RouterLink>
     </div>
 

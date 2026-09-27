@@ -101,6 +101,15 @@ export const useDiaryStore = defineStore('diary', () => {
 
   const loggedDates = computed(() => [...new Set(entries.value.map((e) => e.date))])
 
+  // 每種食品被加入日記幾次，用來排序搜尋結果
+  const pickCounts = computed(() => {
+    const map = new Map()
+    for (const e of entries.value) {
+      if (e.foodId) map.set(e.foodId, (map.get(e.foodId) ?? 0) + 1)
+    }
+    return map
+  })
+
   function addEntry(entry) {
     if (!auth.user) return
     saveError.value = ''
@@ -148,5 +157,5 @@ export const useDiaryStore = defineStore('diary', () => {
     await setDoc(doc(db, 'users', auth.user.uid, 'settings', 'goals'), data, { merge: true })
   }
 
-  return { goalSettings, goals, goalsFor, averageGoals, entries, selectedDate, status, saveError, loggedDates, addEntry, updateEntry, deleteEntry, copyEntries, saveGoals }
+  return { goalSettings, goals, goalsFor, averageGoals, entries, selectedDate, status, saveError, loggedDates, pickCounts, addEntry, updateEntry, deleteEntry, copyEntries, saveGoals }
 })

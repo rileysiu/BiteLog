@@ -22,7 +22,15 @@ const rows = computed(() => {
 })
 
 const r1 = (n) => Math.round(n * 10) / 10
-const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋白 ${r1(o.protein)}g`
+const macroLine = (o) => {
+  const parts = [['碳水', o.carb], ['脂肪', o.fat], ['蛋白', o.protein]]
+    .filter(([, v]) => v !== null && v !== undefined)
+    .map(([label, v]) => `${label} ${r1(v)}g`)
+  return parts.length ? parts.join(' · ') : '沒有填主要營養素'
+}
+
+const linkTo = (item) =>
+  item.source === 'quick' ? { name: 'editQuick', params: { id: item.id } } : { name: 'editEntry', params: { id: item.id } }
 </script>
 
 <template>
@@ -31,7 +39,7 @@ const macroLine = (o) => `碳水 ${r1(o.carb)}g · 脂肪 ${r1(o.fat)}g · 蛋�
     <RouterLink
       v-for="(row, i) in rows"
       :key="row.id"
-      :to="{ name: 'editEntry', params: { id: row.id } }"
+      :to="linkTo(row)"
       class="row"
       :class="{ divider: row.showTime && i > 0 }"
     >

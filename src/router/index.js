@@ -12,6 +12,7 @@ import MealDetailView from '../views/MealDetailView.vue'
 import CustomFoodView from '../views/CustomFoodView.vue'
 import RecipeView from '../views/RecipeView.vue'
 import CalculatorView from '../views/CalculatorView.vue'
+import QuickAddView from '../views/QuickAddView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,8 @@ const router = createRouter({
     { path: '/recipe/new', name: 'newRecipe', component: RecipeView, meta: { hideNav: true } },
     { path: '/recipe/:id', name: 'editRecipe', component: RecipeView, meta: { hideNav: true } },
     { path: '/goals/calculator', name: 'calculator', component: CalculatorView, meta: { hideNav: true } },
+    { path: '/quick-add', name: 'quickAdd', component: QuickAddView, meta: { hideNav: true } },
+    { path: '/quick-add/:id', name: 'editQuick', component: QuickAddView, meta: { hideNav: true } },
   ],
 })
 
