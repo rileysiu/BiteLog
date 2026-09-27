@@ -115,7 +115,16 @@ function close() {
         </div>
       </template>
       <h2 class="section-title">我的食品</h2>
-      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="new-btn">＋ 新增自訂食品</RouterLink>
+      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="quick in-list">
+        <span class="quick-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+        </span>
+        <span class="quick-text">
+          <span class="quick-title">新增自訂食品</span>
+          <span class="quick-sub">照著包裝上的營養標示輸入</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </RouterLink>
       <div v-for="f in custom.list" :key="f.id" class="item">
         <RouterLink :to="{ name: 'editCustomFood', params: { id: f.id } }" class="item-info link">
           <div class="item-name">{{ f.name }}</div>
@@ -127,7 +136,16 @@ function close() {
       </div>
       <template v-if="!picker.isForRecipe">
         <h2 class="section-title">我的食譜</h2>
-        <RouterLink :to="{ name: 'newRecipe' }" class="new-btn">＋ 建立食譜</RouterLink>
+        <RouterLink :to="{ name: 'newRecipe' }" class="quick in-list">
+          <span class="quick-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v2a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z" /><path d="M9 7c0-1.5 1-2 1-3M14 7c0-1.5 1-2 1-3M2 11h2M20 11h2" /></svg>
+          </span>
+          <span class="quick-text">
+            <span class="quick-title">建立食譜</span>
+            <span class="quick-sub">組合食材，自動算出每份營養</span>
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+        </RouterLink>
         <div v-for="r in recipes.list" :key="r.id" class="item">
           <RouterLink :to="{ name: 'editRecipe', params: { id: r.id } }" class="item-info link">
             <div class="item-name">{{ r.name }}</div>
@@ -142,7 +160,16 @@ function close() {
     </template>
     <template v-else-if="results.length === 0">
       <p class="empty">找不到「{{ query }}」</p>
-      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="new-btn">＋ 新增自訂食品</RouterLink>
+      <RouterLink :to="{ name: 'newCustomFood', query: { meal } }" class="quick in-list">
+        <span class="quick-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+        </span>
+        <span class="quick-text">
+          <span class="quick-title">新增自訂食品</span>
+          <span class="quick-sub">照著包裝上的營養標示輸入</span>
+        </span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </RouterLink>
     </template>
 
     <div v-for="f in results" :key="f.id" class="item">
@@ -188,7 +215,6 @@ function close() {
 .add-btn { width: 44px; height: 44px; border: 0; border-radius: 22px; background: var(--soft); color: var(--text-accent); padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .section-title { font-size: 14px; font-weight: 900; margin: 4px 4px 0; }
 .link { text-decoration: none; color: inherit; }
-.new-btn { height: 48px; border: 1.5px dashed #9AA2B3; border-radius: 24px; color: var(--text-accent); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .mine { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: var(--soft); color: var(--text-accent); margin-right: 6px; }
 .count { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: var(--track); color: var(--muted); flex-shrink: 0; white-space: nowrap; }
 .quick { display: flex; align-items: center; gap: 12px; min-height: 56px; margin-top: 12px; padding: 8px 14px 8px 10px; border-radius: 20px; background: #FFFFFF; color: var(--muted); text-decoration: none; }
@@ -196,4 +222,5 @@ function close() {
 .quick-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .quick-title { font-size: 15px; font-weight: 700; color: var(--ink); }
 .quick-sub { font-size: 12px; font-weight: 700; color: var(--muted); }
+.quick.in-list { margin-top: 0; }
 </style>
