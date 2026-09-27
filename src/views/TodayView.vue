@@ -14,8 +14,8 @@ import { useAuthStore } from '../stores/auth'
 
 const diary = useDiaryStore()
 const auth = useAuthStore()
-const { goals, entries, selectedDate, loggedDates } = storeToRefs(diary)
-
+const { entries, selectedDate, loggedDates } = storeToRefs(diary)
+const goals = computed(() => diary.goalsFor(selectedDate.value))
 const calendarOpen = ref(false)
 
 const title = computed(() => titleFor(selectedDate.value))

@@ -14,13 +14,14 @@ const props = defineProps({
 })
 
 const diary = useDiaryStore()
-const { entries, goals } = storeToRefs(diary)
+const { entries } = storeToRefs(diary)
 
 const fmt = (n) => Math.round(n).toLocaleString('en-US')
 const sumKcal = (list) => list.reduce((s, e) => s + (e.kcal || 0), 0)
 
 const dates = computed(() => periodDates(props.period))
 const isDay = computed(() => isDayPeriod(props.period))
+const dayGoal = computed(() => diary.goalsFor(dates.value[0]))
 
 const inPeriod = computed(() => {
   const set = new Set(dates.value)
@@ -32,10 +33,10 @@ const loggedDays = computed(() => new Set(inPeriod.value.map((e) => e.date)).siz
 
 const head = computed(() => {
   if (isDay.value) {
-    const diff = goals.value.kcal - total.value
+    const diff = dayGoal.value.kcal - total.value
     return {
       label: `${periodWord(props.period)}攝取`,
-      sub: `目標 ${fmt(goals.value.kcal)} · ${diff >= 0 ? '剩餘' : '超出'} ${fmt(Math.abs(diff))}`,
+      sub: `目標 ${fmt(dayGoal.value.kcal)} · ${diff >= 0 ? '剩餘' : '超出'} ${fmt(Math.abs(diff))}`,
       over: diff < 0,
     }
   }
@@ -61,6 +62,7 @@ const bars = computed(() =>
     const list = entries.value.filter((e) => e.date === date)
     return {
       label: `${WEEKDAYS[d.getDay()]}${d.getDate()}`,
+      goal: diary.goalsFor(date).kcal,
       segments: MEALS.map((m) => ({ value: sumKcal(list.filter((e) => e.meal === m.key)), color: m.color })),
     }
   })
@@ -107,7 +109,7 @@ const ranking = computed(() => {
           <span v-for="m in MEALS" :key="m.key"><i :style="{ background: m.color }"></i>{{ m.name }}</span>
           <span><i class="dash"></i>目標</span>
         </div>
-        <StackedBars :bars="bars" :ticks="[0, 500, 1000, 1500, 2000]" :goal="goals.kcal" />
+        <StackedBars :bars="bars" :ticks="[0, 500, 1000, 1500, 2000]" />
       </template>
 
       <div class="meals">

@@ -15,7 +15,8 @@ const props = defineProps({
 })
 
 const diary = useDiaryStore()
-const { entries, goals } = storeToRefs(diary)
+const { entries } = storeToRefs(diary)
+const periodGoals = computed(() => diary.averageGoals(periodDates(props.period)))
 
 const MACROS = [
   { key: 'carb', label: '碳水', color: 'var(--carb)', factor: 4 },
@@ -48,7 +49,7 @@ const kcalTotal = computed(() => kcalShares.value.reduce((s, v) => s + v, 0))
 const legend = computed(() =>
   MACROS.map((m, i) => {
     const value = amounts.value[m.key]
-    const goal = goals.value[m.key]
+    const goal = periodGoals.value[m.key]
     return {
       ...m,
       value: Math.round(value),

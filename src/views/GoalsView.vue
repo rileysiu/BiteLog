@@ -10,7 +10,15 @@ const diary = useDiaryStore()
 const auth = useAuthStore()
 const { goalSettings } = storeToRefs(diary)
 
-const form = reactive({ kcal: 0, carbPct: 0, fatPct: 0, proteinPct: 0, weightGoal: '' })
+const form = reactive({
+  kcal: 0,
+  carbPct: 0,
+  fatPct: 0,
+  proteinPct: 0,
+  weightGoal: '',
+  weeklyEnabled: false,
+  weeklyKcal: ['', '', '', '', '', '', ''],
+})
 const dirty = ref(false)
 const mode = ref('pct')
 const saving = ref(false)
@@ -26,6 +34,8 @@ watch(
     form.fatPct = g.fatPct
     form.proteinPct = g.proteinPct
     form.weightGoal = g.weightGoal ?? ''
+    form.weeklyEnabled = !!g.weekly?.enabled
+    form.weeklyKcal = Array.from({ length: 7 }, (_, i) => (g.weekly?.kcal?.[i] ? String(g.weekly.kcal[i]) : ''))
   },
   { immediate: true, deep: true }
 )
@@ -35,6 +45,13 @@ const MACROS = [
   { key: 'fat', label: '脂肪', factor: 9, color: 'var(--fat)' },
   { key: 'protein', label: '蛋白', factor: 4, color: 'var(--protein)' },
 ]
+
+const WEEKDAY_NAMES = ['週日', '週一', '週二', '週三', '週四', '週五', '週六']
+
+function toggleWeekly() {
+  form.weeklyEnabled = !form.weeklyEnabled
+  markDirty()
+}
 
 function gramsOf(m) {
   return Math.round((form.kcal * form[m.key + 'Pct']) / 100 / m.factor)
@@ -71,6 +88,10 @@ async function save() {
       fatPct: form.fatPct,
       proteinPct: form.proteinPct,
       weightGoal: Number.isFinite(w) && w > 0 ? w : null,
+      weekly: {
+        enabled: form.weeklyEnabled,
+        kcal: form.weeklyKcal.map((v) => (Number(v) > 0 ? Number(v) : null)),
+      },
     })
     dirty.value = false
     message.value = '已儲存'
@@ -156,6 +177,43 @@ async function save() {
       </div>
     </div>
   </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">每週不同目標</h2>
+        <p class="sub">例如週末的卡路里目標設高一點</p>
+      </div>
+      <button
+        class="switch"
+        :class="{ on: form.weeklyEnabled }"
+        :aria-pressed="form.weeklyEnabled"
+        aria-label="啟用每週不同目標"
+        @click="toggleWeekly"
+      >
+        <span class="knob"></span>
+      </button>
+    </div>
+
+    <template v-if="form.weeklyEnabled">
+      <p class="sub">沒有填的日子，會使用上面的每日卡路里（{{ form.kcal }} 卡）。碳水、脂肪、蛋白的比例每天都一樣。</p>
+      <div v-for="(label, i) in WEEKDAY_NAMES" :key="i" class="row week-row">
+        <label :for="'wk-' + i">{{ label }}</label>
+        <div class="input-wrap">
+          <input
+            :id="'wk-' + i"
+            v-model="form.weeklyKcal[i]"
+            @input="markDirty"
+            type="number"
+            inputmode="numeric"
+            class="num input small"
+            :placeholder="String(form.kcal)"
+          />
+          <span class="unit">卡</span>
+        </div>
+      </div>
+    </template>
+  </section>
 </template>
 
 <style scoped>
@@ -186,4 +244,9 @@ async function save() {
 .sum { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--soft); font-size: 13px; font-weight: 700; }
 .sum.bad { background: #FDE8DF; color: #9A3412; }
 .calc-link { height: 44px; border-radius: 22px; background: var(--soft); color: var(--text-accent); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.switch { width: 52px; height: 32px; border: 0; border-radius: 16px; padding: 3px; background: #C9CEDA; display: flex; justify-content: flex-start; flex-shrink: 0; }
+.switch.on { background: var(--primary); justify-content: flex-end; }
+.knob { width: 26px; height: 26px; border-radius: 13px; background: #FFFFFF; }
+.week-row { padding-top: 10px; border-top: 1px solid var(--line); }
+.week-row label { font-weight: 700; }
 </style>

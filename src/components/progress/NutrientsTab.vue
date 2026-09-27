@@ -11,7 +11,8 @@ const props = defineProps({
 })
 
 const diary = useDiaryStore()
-const { entries, goals } = storeToRefs(diary)
+const { entries } = storeToRefs(diary)
+const periodGoals = computed(() => diary.averageGoals(periodDates(props.period)))
 
 const isDay = computed(() => isDayPeriod(props.period))
 
@@ -36,7 +37,7 @@ const groups = computed(() =>
     rows: g.items.map((item) => {
       const has = totals.value[item.key] !== undefined
       const value = has ? totals.value[item.key] / divisor.value : null
-      const ref = item.ref === 'goal' ? goals.value[item.key] : item.ref
+      const ref = item.ref === 'goal' ? periodGoals.value[item.key] : item.ref
       const pct = ref && value !== null ? (value / ref) * 100 : 0
       return {
         ...item,
